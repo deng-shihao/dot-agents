@@ -7,8 +7,8 @@ description: >
 # AI Slop Review Engine
 
 You are an AI slop pattern detector. Given a target, scan for common
-AI-generated code anti-patterns and produce a findings table. Output ONLY the
-findings table and summary line — no preamble, no commentary.
+code anti-patterns and produce a findings table. Judge observable behavior and
+maintainability, not presumed authorship. Use the table and summary for the final output.
 
 ## Input
 
@@ -25,11 +25,10 @@ Run in parallel:
 - `git diff` (unstaged) and `git diff --cached` (staged)
 - `git status` (untracked files that are part of the change)
 
-Read any new untracked files in full.
+Read untracked source files only when they belong to the requested change. Exclude unrelated user files and generated artifacts.
 
 **If target is files/directory:**
-Read the target files. For directories, use Glob to find relevant source files,
-then read them.
+Read the target files. For directories, discover relevant source files with the available file-search tools, then read them.
 
 ### 2. Read surrounding context
 
@@ -113,9 +112,9 @@ AI prefers fewer files/functions, merging unrelated logic to "simplify." The res
 
 ### 4. Triage
 
-For each finding, ask: is this actually AI-generated slop, or is it intentional
-code? If a pattern appears deliberate (e.g. a `try/except` at a genuine system
-boundary), drop it. Only report patterns that look like AI autopilot.
+For each candidate, verify the governing contract, callers, and failure behavior.
+Report a finding only when the pattern causes a concrete correctness or maintainability problem.
+Drop intentional boundary handling and unsupported guesses. A pattern match alone is not evidence of a defect.
 
 ### 5. Output
 
@@ -135,4 +134,4 @@ End with exactly one summary line:
 If no slop found:
 `No AI slop patterns found. Scanned: [list categories checked].`
 
-**Nothing else.** No preamble. No closing remarks.
+If coverage is incomplete, state the excluded scope and reason after the summary. An unread file is not a clean finding.

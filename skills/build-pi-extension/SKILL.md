@@ -31,7 +31,7 @@ Ask the user if any of these are underspecified:
 
 ### 2. Read the relevant pi docs
 
-Before writing any code, read the authoritative docs for the pattern you are about to use. The pi docs live under the pi package directory, resolved from the README path listed in the agent context:
+Before writing code, locate the installed pi package and read its authoritative docs. Use a README path from context when supplied. Otherwise resolve `command -v pi` through symlinks to its package directory and confirm the package name and version in `package.json`. If pi is unavailable, report that limit and use the project's pinned source or documentation. Do not assume the cached examples match a different version.
 
 - **Custom tools, events, commands, UI** → `docs/extensions.md`
 - **TUI components (`SelectList`, overlays, theming)** → `docs/tui.md`
@@ -56,7 +56,7 @@ Match the intent to the right `ExtensionAPI` method:
 | Modify tool results | `pi.on("tool_result", ...)` | Return partial patch |
 | Inject context before agent | `pi.on("before_agent_start", ...)` | Return `{ message, systemPrompt }` |
 | React to lifecycle | `pi.on("session_start" / "agent_start" / "turn_end" / ...)` | See events table below |
-| Custom user-facing UI | `ctx.ui.custom(...)` | `SelectList`, `BorderedLoader`, `SettingsList` from `@earendil-works/pi-tui` |
+| Custom user-facing UI | `ctx.ui.custom(...)` | `SelectList`, `SettingsList` from `@earendil-works/pi-tui`; `BorderedLoader` from `@earendil-works/pi-coding-agent` |
 | Persistent footer element | `ctx.ui.setStatus(...)` / `ctx.ui.setWidget(...)` | Widget can go above or below editor |
 | Custom editor | `ctx.ui.setEditorComponent(...)` | Extend `CustomEditor` |
 | Custom provider | `pi.registerProvider(...)` | Models, auth, streaming |
@@ -89,7 +89,7 @@ my-extension/
 
 Build the extension against these rules:
 
-- **Every tool must return** `{ content: ToolContent[], details: Record<string, unknown> }`.
+- **Every tool must return** the installed API's tool-result shape with `content` and `details`. Use `details: undefined` when no structured details are needed. Check the installed declarations for optional result fields.
 - **Every event handler must return** a result matching its event contract (e.g. `{ block: true, reason: "..." }` for `tool_call`, `{ message, systemPrompt }` for `before_agent_start`). If no mutation is needed, return nothing (`undefined`).
 - **TUI components** receive `render(width)`, `handleInput(data)`, `invalidate()`. Each line from `render` must not exceed `width`. Cache rendered output and clear on `invalidate`.
 - **Use `ctx.signal`** for abort-aware fetch/model calls inside handlers.

@@ -2,8 +2,7 @@
 name: everyday-note-summary
 description: >
   Organize and summarize daily notes into structured, searchable documents.
-  Use when working with YYYY-MM-DD*.md files, or when user asks to process,
-  organize, restructure, clean up, or summarize a daily note.
+  Use when asked to summarize, organize, or clean up daily notes, including YYYY-MM-DD*.md files.
 ---
 
 # Everyday Note Summary
@@ -17,7 +16,7 @@ Format: `YYYY-MM-DD-{brief-title}.md`
 
 ## Summary Block
 
-Place at top of file, before original content:
+Place after any frontmatter, before the original content. Update an existing summary instead of adding another:
 
 ```
 YYYY-MM-DD: Title
@@ -29,10 +28,10 @@ Topics:
 
 ## Workflow
 
-Run only the steps the request asks for; default to summary + rename.
+Run only the steps requested. For an unspecified summary request, summarize in chat. Edit or rename source files only when the request calls for it.
 
 ### 1. Read and Summarize
-Read the full note. Write a structured summary block (see Summary Block above) and insert at file start.
+Read the full note. Summarize each substantive topic without adding inferred facts. For a file update, use the Summary Block format above.
 
 ### 2. Restructure
 - Group related topics under `##` headings, `###` for subtopics.
@@ -43,11 +42,15 @@ Read the full note. Write a structured summary block (see Summary Block above) a
 Fix spelling and typos. Skip code blocks, links, and technical references.
 
 ### 4. Rename
-Rename to `YYYY-MM-DD-{brief-title}.md` if it does not match.
+When renaming is requested, use `YYYY-MM-DD-{brief-title}.md`. Preserve a known date, check for collisions, and update affected links within scope.
 
 ## Edge Cases
 
-- **No date in filename**: Extract from content (first line, metadata header, ctime). Fallback to `0000-00-00`.
+- **No date in filename**: Use an explicit date in the note or its metadata. If none exists, retain the filename and ask only if the requested rename requires a date. Filesystem timestamps are not evidence of the note's date.
 - **No discernible topic**: Use broadest category (e.g. "notes").
 - **Multiple files in session**: Process each file independently.
-- **File already well-structured**: Only add summary block and rename if needed.
+- **File already well-structured**: Preserve its structure and update only the requested content.
+
+## Completion
+
+For file edits, compare against the original: preserve facts, code, links, frontmatter, and all content outside the requested changes. Confirm there is one summary and no overwritten file. Report any rename and unresolved date.

@@ -166,3 +166,9 @@ Motion rules:
 - Are cards actually necessary?
 - Does motion improve hierarchy or atmosphere?
 - Would the design still feel premium if all decorative shadows were removed?
+
+## Completion
+
+Run the project's build and affected checks. Inspect the rendered page at narrow and wide viewport sizes. Exercise the primary action, navigation, keyboard focus, and any loading or error states added by the work. Check reduced-motion behavior when adding animation.
+
+Deliver the artifact with the checks actually performed and any unavailable browser verification. Source code and aesthetic checklist answers alone do not verify the rendered experience.

@@ -88,9 +88,12 @@ const result = await ctx.ui.custom<...>(factory, { overlay: true });
 **Built-in components** from `@earendil-works/pi-tui`:
 - `SelectList(items, visibleCount, theme)` — selection UI with keyboard nav
 - `SettingsList(items, visibleCount, theme, onChange, onClose)` — toggle settings
+- `Container`, `Text`, `Box`, `Spacer`, `Markdown`
+- `matchesKey(data, key)`
+
+**Pi integration components** from `@earendil-works/pi-coding-agent`:
 - `BorderedLoader(tui, theme, message)` — spinner with cancel support
-- `Container`, `Text`, `Box`, `Spacer`, `Markdown`, `DynamicBorder`
-- `getSettingsListTheme()`, `getMarkdownTheme()`, `matchesKey(data, key)`
+- `DynamicBorder`, `getSettingsListTheme()`, `getMarkdownTheme()`
 
 See the pi TUI docs for the full component API and key identifiers.
 

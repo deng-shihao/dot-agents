@@ -1,40 +1,21 @@
 ---
 name: read-arxiv-paper
-description: Use this skill when asked to read an arxiv paper given an arxiv URL
+description: Read an arXiv paper from its URL, inspect its source, and save a cited summary connected to the current project when relevant.
 ---
 
-You will be given a URL of an arxiv paper, for example:
+## Read the paper
 
-https://www.arxiv.org/abs/2601.07372
+1. Extract the paper ID and any explicit version from the supplied arXiv URL. Preserve both in the source URL, such as `https://arxiv.org/src/2601.07372v1`. Keep legacy IDs intact when they contain a subject prefix.
+2. Use the project's existing paper cache if one exists. Otherwise, create a unique temporary directory. Reuse a download only after checking that it contains the requested paper and version.
+3. Fetch with `curl -fsSL --connect-timeout 10 --max-time 60 '<source-url>' -o '<download-path>'`. Check the exit status and file type before reading or extracting it. An error page or empty response is a failed download.
+4. Inspect the downloaded format. Read a plain source file directly; decompress or unpack only when the file type requires it. For an archive, list entries first and extract into the isolated directory. Reject absolute paths, parent-directory traversal, or links that escape that directory.
+5. Locate the TeX entrypoint by inspecting document declarations and included files, rather than assuming its filename. Read the included sections, bibliography entries supporting key claims, and figure captions needed for the request. Track unread or missing material explicitly.
+6. If source retrieval fails, try available arXiv HTML or PDF reading tools and disclose that source inspection was unavailable. Use [PDF reader](../pdf-reader/SKILL.md) when figures or page layout affect the interpretation.
 
-### Part 1: Normalize the URL
+## Save the findings
 
-The goal is to fetch the TeX Source of the paper (not the PDF!), the URL always looks like this:
+Summarize the problem, method, main evidence, limitations, and implications for the user's question. Cite the paper URL and version, plus sections or figures supporting important claims. Separate the authors' claims from your interpretation. When project application is requested or relevant, inspect the relevant project code before drawing connections.
 
-https://www.arxiv.org/src/2601.07372
+Save the summary using the project's research-note convention. If none exists, use `knowledge/summary_<topic>.md`; choose a non-conflicting filename. Honor a user-requested output destination or chat-only format.
 
-Notice the /src/ in the url. Once you have the URL:
-
-### Part 2: Download the paper source
-
-Fetch the url to a local .tar.gz file. A good location is `~/.cache/nanochat/knowledge/{arxiv_id}.tar.gz`.
-
-(If the file already exists, there is no need to re-download it).
-
-### Part 3: Unpack the file in that folder
-
-Unpack the contents into `~/.cache/nanochat/knowledge/{arxiv_id}` directory.
-
-### Part 4: Locate the entrypoint
-
-Every latex source usually has an entrypoint, such as `main.tex` or something like that.
-
-### Part 5: Read the paper
-
-Once you've found the entrypoint, Read the contents and then recurse through all other relevant source files to read the paper.
-
-### Part 6: Report
-
-Produce a summary of the paper to `./knowledge/summary_{tag}.md` using the local `knowledge` directory (not `~/.cache`). Generate a reasonable `tag` from the paper's topic (e.g. `conditional_memory`) — ensure the filename doesn't already exist.
-
-If working within a specific project, read the relevant project code and connect the paper's lessons to the project: what applies, what might be worth trying, what inspires a different approach.
+Read the saved summary back. Completion requires an answer to each requested question or an explicit evidence gap, accurate artifact pointers, and a returned absolute output path. Report partial reading without claiming the full paper was inspected.

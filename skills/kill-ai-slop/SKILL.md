@@ -22,25 +22,25 @@ The principles, held on every fix you make:
 
 ## Workflow
 
-Follow these steps in order. Do not mass-edit before the user has seen the report.
+Follow these steps in order. For a review request, stop after the report. For an authorized cleanup, report the confirmed changes and continue within that scope.
 
 ### 1. Scope
-Confirm what to scan. Default to the app/site source (skip `node_modules`, `dist`, `build`, `.git`, `vendor`, lockfiles, minified files). Ask if the project mixes several apps.
+Use the requested app/site source. If the project contains several apps and the target is unclear, resolve the target before scanning. Skip generated output, dependencies, lockfiles, and minified files.
 
 ### 2. Scan
-Run the bundled scanner, which greps the codebase for the code-level signals of each tell and prints grouped `file:line` hits:
+Resolve this skill's directory from its supplied `SKILL.md` path. Run the bundled [scanner](scripts/scan.mjs) with that absolute path while keeping the project as the working directory:
 
 ```
-node scripts/scan.mjs <root>          # human-readable report
-node scripts/scan.mjs <root> --json   # machine-readable, for triage
+bun "<absolute-skill-directory>/scripts/scan.mjs" "<project-root>"
+bun "<absolute-skill-directory>/scripts/scan.mjs" "<project-root>" --json
 ```
 
-It is pure Node (no dependencies) and never edits files. Use its output as a starting map, not gospel — confirm each hit by reading the code.
+The scanner has no dependencies and also runs with Node. It never edits files. Invalid roots and read errors must fail the scan; resolve the error before reporting coverage. It skips files larger than 512 KiB and lines longer than 2,000 characters. Inspect relevant skipped content separately and report any remaining coverage limits. Confirm each hit by reading the code.
 
 ### 3. Triage
 For every hit, open the file and decide **slop vs. intentional**. This is the step that separates this skill from a lint rule. A gradient, a serif, or an emoji can be a real, defended choice. Keep anything the user clearly chose (brand tokens, a logo, a deliberate illustration). Flag only defaults.
 
-Read `references/taxonomy.md` for what each tell is and why it reads as machine-made, and `references/detection.md` for the exact patterns and their common false positives.
+Read the [taxonomy](references/taxonomy.md) for each signal's meaning and [detection reference](references/detection.md) for patterns and false positives.
 
 ### 4. Report
 Before changing anything, give the user a grouped summary: each tell, the `file:line` hits you confirmed, one sentence on why, and the proposed fix. Mirror the format:
@@ -53,15 +53,15 @@ slop  copy.md:1         "not just X — it's Y"         → say the specific thi
 → 4 groups, 11 hits.
 ```
 
-Then ask which groups to apply, or whether to proceed on all.
+For review-only requests, leave the proposed fixes for the user. For cleanup requests, apply the confirmed groups already authorized. Ask only when a fix needs a brand or scope decision the user has not settled.
 
 ### 5. Fix
-Apply the minimal change that removes the tell while preserving intent and function. Use `references/fixes.md` for the before→after pattern per tell.
+Apply the minimal change that removes the tell while preserving intent and function. Use the [fix examples](references/fixes.md) for remediation patterns.
 
 - Prefer editing shared tokens/components over touching every call site.
-- Never invent new brand colors; if a palette must change, propose neutrals + the project's existing accent and let the user confirm.
+- Preserve the project's existing palette and brand tokens. A new brand palette needs a user decision unless already authorized.
 - Keep copy meaning; make it specific, don't just delete it.
-- Re-run the scanner after fixing to confirm the count dropped, and note any hits you intentionally left (with the reason).
+- Re-run the scanner to find remaining signals. Record intentional hits and their reasons. Accept a fix when it preserves function and improves the rendered page; a lower hit count is not an acceptance criterion.
 
 ## Guardrails
 
@@ -70,9 +70,8 @@ Apply the minimal change that removes the tell while preserving intent and funct
 - **No new dependencies** to do this work.
 - **Verify visually when possible.** If a dev server exists, look at the before and after; a passing scan is not the same as a better page.
 
-## References
+## Completion
 
-- `references/taxonomy.md` — the 23 tells: what each is, why it's slop, the fix.
-- `references/detection.md` — concrete ripgrep/regex patterns + false positives.
-- `references/fixes.md` — before→after remediation patterns.
-- `scripts/scan.mjs` — the dependency-free scanner.
+Report the reviewed scope, confirmed changes or findings, and intentional signals. For edits, run the project's relevant checks and inspect the changed views at desktop and mobile sizes. State which checks passed, failed, or were unavailable. If rendering is unavailable, report visual verification as incomplete.
+
+For scanner changes, run `bun test "<absolute-skill-directory>/scripts/scan.test.mjs"`.

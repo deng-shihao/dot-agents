@@ -25,17 +25,7 @@ AI models produce predictable defects in Chinese translation: English word order
 
 Read the full English source document before translating anything.
 
-Identify ambiguous passages, domain-specific terminology, and phrases that could be interpreted multiple ways. Present ambiguities in a table:
-
-| English Passage | Possible Meanings | Chosen Interpretation |
-|---|---|---|
-| ... | ... | ... |
-
-For unresolved terminology:
-1. Explore the project context (README, codebase, related docs) for usage conventions.
-2. If ambiguity persists, stop and ask the user.
-
-Do not proceed to translation until all ambiguities are resolved.
+Resolve terminology from the source, project context, and established usage. Ask only when an unresolved meaning would materially change the translation. Continue with independent passages while waiting. Keep minor ambiguities faithful to the source instead of inventing precision.
 
 ### Phase 2: Initial Translation
 
@@ -49,7 +39,7 @@ Translate the full document in one pass. During the initial draft:
 
 ### Phase 3: Iterative Polish
 
-Run a minimum of **3 rounds**. Each round performs three distinct checks in order. If any round produces changes, run one additional round after the minimum 3.
+Run the accuracy, fluency, and slop checks below. After a correction, recheck the affected passage against the source and its surrounding text. Repeat only for an identified defect.
 
 #### Accuracy Check
 
@@ -82,28 +72,13 @@ Detect and remove AI-specific defect patterns:
 - 原文没有的展开 — elaboration added beyond what source states
 - 翻译腔 — literal calques, unnatural collocations, mechanical "的" chains
 
-For a detailed catalog of these patterns with examples, consult **`references/translation-examples.md`**.
+For unfamiliar patterns, consult [translation examples](references/translation-examples.md).
 
 ### Final Validation
 
-After iterative polish converges (a round produces zero changes):
+After the three checks:
 
 1. Read the complete Chinese document from start to finish, as a Chinese reader, without referring to the English source.
 2. Ask: does this read like a native Chinese speaker wrote it? Any AI slop indicators or 翻译腔 remaining?
-3. If any issue is found, return to Phase 3 for another round.
-4. Claim translation complete only when the full read-through raises no issues.
-
-Do not rush this step.
-
-## Quick Reference
-
-| Phase | Action | Goal |
-|-------|--------|------|
-| 1. Comprehension | Read source, list ambiguities, resolve terminology | Full understanding |
-| 2. Initial Translation | Translate in one pass, preserve formatting | Complete draft |
-| 3. Iterative Polish | Accuracy → Fluency → AI Slop, minimum 3 rounds | High quality |
-| 4. Final Validation | Full read-through as Chinese reader | Confirm quality |
-
-## Additional Resources
-
-- **`references/translation-examples.md`** — Good vs bad translation examples, 翻译腔 pattern catalog, and detailed quality checklist
+3. Recheck any correction against the English source. Verify that names, numbers, claims, links, and code remain intact.
+4. Deliver the complete translation when every source passage is accounted for and no identified defect remains. Disclose unresolved material ambiguity.

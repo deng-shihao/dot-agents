@@ -1,6 +1,6 @@
 # HTML Report Format
 
-The architectural review is rendered as a single self-contained HTML file in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
+Render the review as one offline HTML file in the OS temp directory. Inline the CSS and SVG. If an installed Mermaid renderer is available, embed its SVG output; otherwise draw the diagrams with HTML and SVG. The report must remain readable without network access or scripts.
 
 ## Scaffold
 
@@ -10,28 +10,32 @@ The architectural review is rendered as a single self-contained HTML file in the
   <head>
     <meta charset="utf-8" />
     <title>Architecture review — {{repo name}}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      /* small custom layer for things Tailwind doesn't cover cleanly:
-         dashed seam lines, hand-drawn-feeling arrow heads, etc. */
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #fafaf9; color: #0f172a; font: 16px/1.5 system-ui, sans-serif; }
+      main { max-width: 64rem; margin: auto; padding: 3rem 1.5rem; }
+      section, article { margin-block: 3rem; }
+      .comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+      .diagram { padding: 1rem; background: white; border: 1px solid #cbd5e1; }
+      svg { display: block; width: 100%; height: auto; }
       .seam { stroke-dasharray: 4 4; }
       .leak { stroke: #dc2626; }
-      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .deep { fill: #0f172a; }
+      @media (max-width: 40rem) { .comparison { grid-template-columns: 1fr; } }
     </style>
   </head>
-  <body class="bg-stone-50 text-slate-900 font-sans">
-    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+  <body>
+    <main>
       <header>...</header>
-      <section id="candidates" class="space-y-10">...</section>
+      <section id="candidates">...</section>
       <section id="top-recommendation">...</section>
     </main>
   </body>
 </html>
 ```
+
+Escape repository text inserted into HTML or SVG. Replace every placeholder and provide each SVG with a descriptive title. Inspect the saved report at narrow and wide viewport sizes when rendering tools are available. Verify that text, labels, arrows, and diagrams remain readable; report any unavailable visual checks.
 
 ## Header
 
@@ -45,7 +49,7 @@ Each candidate is one `<article>`:
 
 - **Title** — short, names the deepening (e.g. "Collapse the Order intake pipeline").
 - **Badge row** — recommendation strength (`Strong` = emerald, `Worth exploring` = amber, `Speculative` = slate), plus a tag for the dependency category (`in-process`, `local-substitutable`, `ports & adapters`, `mock`).
-- **Files** — monospaced list, `font-mono text-sm`.
+- **Files** — monospaced paths with line references for the observed problem.
 - **Before / After diagram** — the centrepiece. Two columns, side by side. See patterns below.
 - **Problem** — one sentence. What hurts.
 - **Solution** — one sentence. What changes.
@@ -58,22 +62,33 @@ No paragraphs of explanation. If the diagram needs a paragraph to be understood,
 
 Pick the pattern that fits the candidate. Mix them. Don't make every diagram look the same — variety is part of the point.
 
-### Mermaid graph (the workhorse for dependencies / call flow)
+### Call-flow graph
 
-Use a Mermaid `flowchart` or `graph` when the point is "X calls Y calls Z, and look at the mess." Wrap it in a Tailwind-styled card so it doesn't feel parachuted in. Style with classDef to colour leakage edges red and the deep module dark. Sequence diagrams work well for "before: 6 round-trips; after: 1."
+Show the observed call direction and identify the proposed change. Use Mermaid only when a local renderer can produce embedded SVG. This plain SVG example has no runtime dependency:
 
 ```html
-<div class="rounded-lg border border-slate-200 bg-white p-4">
-  <pre class="mermaid">
-    flowchart LR
-      A[OrderHandler] --> B[OrderValidator]
-      B --> C[OrderRepo]
-      C -.leak.-> D[PricingClient]
-      classDef leak stroke:#dc2626,stroke-width:2px;
-      class C,D leak
-  </pre>
+<div class="diagram">
+  <svg viewBox="0 0 440 90" role="img" aria-labelledby="order-flow-title">
+    <title id="order-flow-title">Order intake calls order storage</title>
+    <defs>
+      <marker id="order-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 Z" fill="#475569" />
+      </marker>
+    </defs>
+    <g fill="white" stroke="#475569">
+      <rect x="10" y="15" width="170" height="60" rx="4" />
+      <rect x="260" y="15" width="170" height="60" rx="4" />
+      <path d="M180 45 H255" marker-end="url(#order-arrow)" />
+    </g>
+    <g text-anchor="middle" fill="#0f172a" font-size="16">
+      <text x="95" y="51">Order intake</text>
+      <text x="345" y="51">Order storage</text>
+    </g>
+  </svg>
 </div>
 ```
+
+Use distinct SVG IDs for each diagram so marker and title references remain local to the intended graphic.
 
 ### Hand-built boxes-and-arrows (when Mermaid's layout fights you)
 
@@ -81,7 +96,7 @@ Modules as `<div>`s with borders and labels. Arrows as inline SVG `<line>` or `<
 
 ### Cross-section (good for layered shallowness)
 
-Stack horizontal bands (`h-12 border-l-4`) to show layers a call passes through. Before: 6 thin layers each doing nothing. After: 1 thick band labelled with the consolidated responsibility.
+Stack horizontal bands to show layers a call passes through. Before: 6 thin layers each doing nothing. After: 1 thick band labelled with the consolidated responsibility.
 
 ### Mass diagram (good for "interface as wide as implementation")
 
@@ -93,11 +108,11 @@ Before: a tree of function calls rendered as nested boxes. After: the same tree 
 
 ## Style guidance
 
-- Lean editorial, not corporate-dashboard. Generous whitespace. Serif optional for headings (`font-serif` works well with stone/slate).
+- Lean editorial, not corporate-dashboard. Use generous whitespace and system fonts; serif is optional for headings.
 - Colour sparingly: one accent (emerald or indigo) plus red for leakage and amber for warnings.
 - Keep diagrams ~320px tall so before/after sits comfortably side by side without scrolling.
-- Use `text-xs uppercase tracking-wider` for module labels inside diagrams — they should read as schematic, not as UI.
-- The only scripts are the Tailwind CDN and the Mermaid ESM import. The report is otherwise static — no app code, no interactivity beyond Mermaid's own rendering.
+- Keep module labels legible at the diagram's rendered size.
+- Keep the artifact static and self-contained: embedded styles and diagrams, with no CDN requests.
 
 ## Top recommendation section
 

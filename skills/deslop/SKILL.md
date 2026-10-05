@@ -34,7 +34,7 @@ This split is why the skill cannot collapse into a single voice instruction. Rem
 - Generating new content from scratch (use the appropriate writing skill)
 - Translating between languages (use `better-translate` for English→Chinese)
 - Polishing prose that is already in human voice — just edit directly
-- Code review or documentation review (use `review`)
+- Code review (use [ai-slop-review](../ai-slop-review/SKILL.md)); agent-instruction review (use [writing-for-agents](../writing-for-agents/SKILL.md))
 
 ## Workflow
 
@@ -43,7 +43,7 @@ This split is why the skill cannot collapse into a single voice instruction. Rem
 Read the entire article end-to-end before editing anything. Identify:
 
 - **Domain & audience** — technical post, marketing copy, tutorial, video description?
-- **Author voice clues** — first-person anecdotes, idioms, jokes, complaints? If the source has none, ask the user for a reference sample of their actual voice. Without that, the rewrite can only reach "neutral", not "their voice".
+- **Author voice clues**: preserve first-person anecdotes, idioms, jokes, and complaints from the source. If no voice sample exists, use neutral prose. Request a sample only when matching a specific author's voice is essential.
 - **Real information** — concrete numbers, names, prices, specs, opinions, citations. These survive the rewrite untouched.
 - **Slop scaffolding** — what was added purely as decoration. This is what gets stripped.
 
@@ -88,7 +88,7 @@ Walk the article and tag every instance against the checklist below. Do not rewr
 
 #### E. Voice Erasure
 
-- **Lost first-person voice** — author self-deprecation, jokes, anecdotes, complaints removed in favor of neutral marketing copy. Restore from source. If source had none, ask the user.
+- **Lost first-person voice**: restore author self-deprecation, jokes, anecdotes, and complaints from the source. If the source has none, retain neutral prose without inventing personal experience.
 - **Uniform paragraph rhythm** — every paragraph the same length, every sentence the same shape. Vary. Some paragraphs should be one line; some should ramble.
 - **Over-formal hedging** — "在某种程度上可以认为", "或许可以这样理解" added to claims the author stated plainly. Restore directness.
 

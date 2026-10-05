@@ -1,11 +1,13 @@
 # GitHub
 
+Apply the [fetch and pipeline checks](../SKILL.md#fallback-ladder) before using these recipes.
+
 ## Known file path (preferred)
 
-Pure read, no auth, no rate-limit hit:
+For a known public file:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>
+curl -fsSL --connect-timeout 10 --max-time 30 https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>
 ```
 
 Use this whenever you have an explicit file path. For wiki pages: `https://raw.githubusercontent.com/wiki/<owner>/<repo>/<page>.md`.
@@ -27,23 +29,26 @@ The `comments` field returns an array of `{author, body, createdAt}` — no need
 
 ## Search issues / PRs
 
-Anonymous, no `gh api` needed (60 req/hr limit):
+For public search, try the endpoint and inspect its status and rate-limit response:
 
 ```bash
-curl -sL 'https://api.github.com/search/issues?q=is:issue+<query>&per_page=10' | jq
+curl -fsSL --connect-timeout 10 --max-time 30 'https://api.github.com/search/issues?q=is:issue+<query>&per_page=10' | jq
 ```
 
-The GitHub search API requires `is:issue` or `is:pull-request` in the query — a bare keyword search will return HTTP 422. Other useful qualifiers: `repo:<owner>/<repo>`, `author:<user>`, `label:<label>`, `state:open`, `in:title`.
+Narrow queries with `is:issue` or `is:pr`. Other useful qualifiers include `repo:<owner>/<repo>`, `author:<user>`, `label:<label>`, `state:open`, and `in:title`. Encode the query as a URL parameter.
 
-Modern gh (≥2.6) also has `gh search issues <query>` / `gh search prs <query>` — same underlying API, cleaner output.
+When available, `gh search issues <query>` and `gh search prs <query>` provide CLI search. Inspect their help for supported filters and limits.
 
 ## Repo / gist metadata
 
 ```bash
-gh repo view <owner>/<repo> --json name,description,defaultBranchRef,stargazerCount,languages,readme
+gh repo view <owner>/<repo> --json name,description,defaultBranchRef,stargazerCount,languages
+gh repo view <owner>/<repo>
 gh gist view <id>
 ```
 
-## Avoid `gh api`
+The plain `gh repo view` command displays the README; `readme` is not a supported JSON field.
 
-`gh api` is NOT in `allowed-tools` and shouldn't be reached for casually. It's broad (can write via `-X POST/PATCH/DELETE`), counts against your token's rate limit, and the paths covered above handle 95% of read cases. If you genuinely need a REST endpoint not accessible via `gh repo/issue/pr/gist view`, prefer anonymous `curl https://api.github.com/...` first.
+## Other read endpoints
+
+Use available authenticated read tooling when the task requires private content or a REST endpoint absent from the view commands. Inspect `gh api --help` and use an explicit GET method for REST reads. Follow pagination when the requested scope requires every result. Tool availability and permissions come from the current session.

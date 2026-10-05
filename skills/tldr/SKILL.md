@@ -5,14 +5,14 @@ disable-model-invocation: true
 user-invocable: true
 ---
 
-Append exactly one line as a TLDR summary of the prior response for the user to fast-read the verdict.
+Use only when the user requests `/tldr` or explicitly invokes this skill. Append one line summarizing the prior response's verdict.
 
 Format strictly:
-  📌 <verdict in under 20 words>
+  TLDR: <verdict in at most 20 words>
 
 Rules:
   - Write the verdict in the same language as your previous response.
   - Lead with the key verdict / answer / decision — not a recap of topics.
   - One sentence, hard cap 20 words.
-  - No new information, no caveats, no bullet list.
+  - Preserve any qualification essential to the verdict. Add no new information or bullet list.
   - Output ONLY that single summary line. Nothing else.

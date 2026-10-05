@@ -165,12 +165,7 @@ const TELLS = [
 ];
 
 function walk(dir, files = []) {
-  let entries;
-  try {
-    entries = readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return files;
-  }
+  const entries = readdirSync(dir, { withFileTypes: true });
   for (const e of entries) {
     if (e.name.startsWith(".") && e.name !== ".") {
       if (SKIP_DIRS.has(e.name)) continue;
@@ -191,14 +186,9 @@ function walk(dir, files = []) {
 }
 
 function scanFile(path) {
-  let text;
-  try {
-    const st = statSync(path);
-    if (st.size > 512 * 1024) return []; // skip large/generated files
-    text = readFileSync(path, "utf8");
-  } catch {
-    return [];
-  }
+  const st = statSync(path);
+  if (st.size > 512 * 1024) return []; // skip large/generated files
+  const text = readFileSync(path, "utf8");
   const isCode = ![".md", ".mdx"].includes(extname(path));
   const lines = text.split(/\r?\n/);
   const hits = [];

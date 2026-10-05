@@ -140,9 +140,8 @@ Rows should cite the specific file and the specific property that changed when i
 - [ ] `will-change` only on transform/opacity/filter, never `all`
 - [ ] Interactive elements have at least 40×40px hit area
 
-## Reference Files
+## Completion
 
-- [typography.md](typography.md) — Text wrapping, font smoothing, tabular numbers
-- [surfaces.md](surfaces.md) — Border radius, optical alignment, shadows, image outlines
-- [animations.md](animations.md) — Interruptible animations, enter/exit transitions, icon animations, scale on press
-- [performance.md](performance.md) — Transition specificity, `will-change` usage
+Compare the changed views before and after at narrow and wide viewport sizes. Exercise affected controls with pointer and keyboard input. For motion changes, verify interruption and reduced-motion behavior. Run the project's affected checks.
+
+Report the specific improvement and observed verification. When rendering is unavailable, identify the visual checks that remain unverified.

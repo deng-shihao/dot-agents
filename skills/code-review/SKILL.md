@@ -1,192 +1,66 @@
 ---
 name: code-review
-description: Run an extremely strict maintainability review for abstraction quality, giant files, and spaghetti-condition growth. Use for a deep code quality audit or an especially harsh maintainability review.
+description: Strict maintainability review of abstractions, module ownership, branching complexity, and opportunities to delete unnecessary structure.
 disable-model-invocation: true
 ---
 
-# Strict Code Quality Review
+# Strict code quality review
 
-Use this skill for an unusually strict review focused on implementation quality, maintainability, abstraction quality, and codebase health.
+Use when the user requests a strict maintainability audit or explicitly invokes this skill. Review requests produce findings. Apply fixes only when the user requests implementation.
 
-Above all, this skill should push the reviewer to be **ambitious** about code structure. Do not merely identify local cleanup opportunities. Actively search for "code judo" moves: restructurings that preserve behavior while making the implementation dramatically simpler, smaller, more direct, and more elegant.
+Look for structural changes that preserve behavior while deleting concepts, branches, or layers. Hold a high bar for maintainability, with evidence for each finding.
 
-## Core Prompt
+## Process
 
-Start from this baseline:
+1. **Establish scope.** Inspect status and the requested files or diff. For a branch review, identify the base and compare from the merge base. Preserve unrelated work.
+2. **Read the contracts.** Inspect surrounding code, callers, types, tests, and relevant design decisions. Locate the module that owns each changed behavior.
+3. **Apply the standards below.** Evaluate every meaningful change. Trace suspected problems to a concrete caller, failure mode, or maintenance burden.
+4. **Challenge the remedy.** Show how the proposed structure reduces complexity while preserving the contract. Check whether an existing abstraction already solves the problem.
+5. **Report.** Rank actionable findings by impact. State the reviewed scope and any verification gaps. A clean review requires examination of the whole requested scope.
 
-> Perform a deep code quality audit of the current branch's changes.
-> Rethink how to structure / implement the changes to meaningfully improve code quality without impacting behavior.
-> Work to improve abstractions, modularity, reduce Spaghetti code, improve succinctness and legibility.
-> Be ambitious, if there is a clear path to improving the implementation that involves restructuring some of the codebase, go for it.
-> Be extremely thorough and rigorous. Measure twice, cut once.
+## Review standards
 
-## Non-Negotiable Additional Standards
+### Delete complexity
 
-Apply the baseline prompt above, plus these explicit review rules:
+Prefer remedies that remove moving parts over rearrangements that spread the same complexity across more files. Look for redundant modes, repeated branches, identity wrappers, and unnecessary orchestration. Explain what disappears and why behavior remains intact.
 
-0. **Be ambitious about structural simplification.**
-   - Do not stop at "this could be a bit cleaner."
-   - Look for opportunities to reframe the change so that whole branches, helpers, modes, conditionals, or layers disappear entirely.
-   - Prefer the solution that makes the code feel inevitable in hindsight.
-   - Assume there is often a "code judo" move available: a re-organization that uses the existing architecture more effectively and makes the change dramatically simpler and more elegant.
-   - If you see a path to delete complexity rather than rearrange it, push hard for that path.
+### Keep ownership clear
 
-1. **Do not let a PR push a file from under 1k lines to over 1k lines without a very strong reason.**
-   - Treat this as a strong code-quality smell by default.
-   - Prefer extracting helpers, subcomponents, modules, or local abstractions instead of letting a file sprawl past 1000 lines.
-   - If the diff crosses that threshold, explicitly ask whether the code should be decomposed first.
-   - Only waive this if there is a compelling structural reason and the resulting file is still clearly organized.
+Keep feature logic in its canonical module. Reuse existing utilities when their contracts fit. Flag implementation details leaking through interfaces, feature checks scattered across shared flows, and duplicate sources of truth.
 
-2. **Do not allow random spaghetti growth in existing code.**
-   - Be highly suspicious of new ad-hoc conditionals, scattered special cases, or one-off branches inserted into unrelated flows.
-   - If a change adds "weird if statements in random places", treat that as a design problem, not a stylistic nit.
-   - Prefer pushing the logic into a dedicated abstraction, helper, state machine, policy object, or separate module instead of tangling an existing path.
-   - Call out changes that make the surrounding code harder to reason about, even if they technically work.
+### Make state and contracts explicit
 
-3. **Bias toward cleaning the design, not just accepting working code.**
-   - If behavior can stay the same while the structure becomes meaningfully cleaner, push for the cleaner version.
-   - Do not rubber-stamp "it works" implementations that leave the codebase messier.
-   - Strongly prefer simplifications that remove moving pieces altogether over refactors that merely spread the same complexity around.
+Trace optional values, casts, flags, and fallback branches to their actual invariants. Flag shapes that permit impossible states or conceal required data. A clearer type or state model earns its place when it removes ambiguity or branching.
 
-4. **Prefer direct, boring, maintainable code over hacky or magical code.**
-   - Treat brittle, ad-hoc, or "magic" behavior as a code-quality problem.
-   - Be skeptical of generic mechanisms that hide simple data-shape assumptions.
-   - Flag thin abstractions, identity wrappers, or pass-through helpers that add indirection without buying clarity.
+### Control branching growth
 
-5. **Push hard on type and boundary cleanliness when they affect maintainability.**
-   - Question unnecessary optionality, `unknown`, `any`, or cast-heavy code when a clearer type boundary could exist.
-   - Prefer explicit typed models or shared contracts over loosely-shaped ad-hoc objects.
-   - If a branch relies on silent fallback to paper over an unclear invariant, ask whether the boundary should be made explicit instead.
+Inspect special cases in their surrounding flow. Prefer a direct default path or a coherent model when it removes repeated decisions. A state machine, dispatcher, helper, or policy object must simplify the actual problem; it is not a required remedy for every conditional.
 
-6. **Keep logic in the canonical layer and reuse existing helpers.**
-   - Call out feature logic leaking into shared paths or implementation details leaking through APIs.
-   - Prefer existing canonical utilities/helpers over bespoke one-offs.
-   - Push code toward the right package, service, or module instead of normalizing architectural drift.
+### Preserve cohesive modules
 
-7. **Treat unnecessary sequential orchestration and non-atomic updates as design smells when the cleaner structure is obvious.**
-   - If independent work is serialized for no good reason, ask whether the flow should run in parallel instead.
-   - If related updates can leave state half-applied, push for a more atomic structure.
-   - Do not over-index on micro-optimizations, but do flag avoidable orchestration complexity that makes the implementation more brittle.
+Treat a changed file crossing 1,000 lines as a prompt to inspect cohesion and scan cost. Report its measured size and the concrete ownership problem. Size alone does not justify a blocker or automatic split. Propose decomposition only when responsibilities and callers support it.
 
-## Primary Review Questions
+### Keep mechanisms direct
 
-For every meaningful change, ask:
+Flag generic machinery that hides simple data assumptions, brittle compatibility paths, and thin abstractions that add indirection. Prefer explicit failure behavior and readable control flow.
 
-- Is there a "code judo" move that would make this dramatically simpler?
-- Can this change be reframed so fewer concepts, branches, or helper layers are needed?
-- Does this improve or worsen the local architecture?
-- Did the diff add branching complexity where a better abstraction should exist?
-- Did a previously cohesive module become more coupled, more stateful, or harder to scan?
-- Is this logic living in the right file and layer?
-- Did this change enlarge a file or component past a healthy size boundary?
-- Are there repeated conditionals that signal a missing model or missing helper?
-- Is the implementation direct and legible, or does it rely on special cases and incidental control flow?
-- Is this abstraction actually earning its keep, or is it just a wrapper?
-- Did the diff introduce casts, optionality, or ad-hoc object shapes that obscure the real invariant?
-- Is this logic living in the canonical layer, or did the diff leak details across a boundary?
-- Is this orchestration more sequential or less atomic than it needs to be?
+### Inspect orchestration
 
-## What to Flag Aggressively
+Look for unnecessarily serialized independent work and related writes that can leave partial state. Recommend parallelism or atomic updates only after checking ordering, resource limits, cancellation, and failure semantics.
 
-Escalate findings when you see:
+## Findings
 
-- A complicated implementation where a cleaner reframing could delete whole categories of complexity.
-- Refactors that move code around but fail to reduce the number of concepts a reader must hold in their head.
-- A file crossing 1000 lines due to the PR, especially if the new code could be split out.
-- New conditionals bolted onto unrelated code paths.
-- One-off booleans, nullable modes, or flags that complicate existing control flow.
-- Feature-specific logic leaking into general-purpose modules.
-- Generic "magic" handling that hides simple structure and makes the code harder to reason about.
-- Thin wrappers or identity abstractions that add indirection without simplifying anything.
-- Unnecessary casts, `any`, `unknown`, or optional params that muddy the real contract.
-- Copy-pasted logic instead of extracted helpers.
-- Narrow edge-case handling implemented in the middle of an already busy function.
-- Refactors that technically pass tests but make the code less modular or less readable.
-- "Temporary" branching that is likely to become permanent debt.
-- Bespoke helpers where the codebase already has a canonical utility for the job.
-- Logic added in the wrong layer/package when it should live somewhere more central.
-- Sequential async flow where obviously independent work could stay simpler and clearer with parallel execution.
-- Partial-update logic that leaves state less atomic than necessary.
+For each finding, include:
 
-## Preferred Remedies
+- File and line, with the concrete pattern or triggering path.
+- The correctness or maintenance impact and its supporting evidence.
+- The smallest remedy that addresses the cause, with the contract to preserve.
+- Verification that would distinguish the fix from a cosmetic rearrangement.
 
-When you identify a code-quality problem, prefer suggestions like:
+Prioritize structural regressions, demonstrated simplification opportunities, contract or ownership problems, then local legibility. Combine findings with one root cause. Omit cosmetic nits when stronger issues dominate.
 
-- Delete a whole layer of indirection rather than polishing it.
-- Reframe the state model so conditionals disappear instead of getting centralized.
-- Change the ownership boundary so the feature becomes a natural extension of an existing abstraction.
-- Turn special-case logic into a simpler default flow with fewer exceptions.
-- Extract a helper or pure function.
-- Split a large file into smaller focused modules.
-- Move feature-specific logic behind a dedicated abstraction.
-- Replace condition chains with a typed model or explicit dispatcher.
-- Separate orchestration from business logic.
-- Collapse duplicate branches into a single clearer flow.
-- Delete wrappers that do not meaningfully clarify the API.
-- Reuse the existing canonical helper instead of introducing a near-duplicate.
-- Make type boundaries more explicit so the control flow gets simpler.
-- Move the logic to the package/module/layer that already owns the concept.
-- Parallelize independent work when that also simplifies the orchestration.
-- Restructure related updates into a more atomic flow when partial state would be harder to reason about.
+Treat a defect as blocking when its impact and remedy are supported by the code. Mark speculative alternatives as design options, with the assumption they depend on. Passing tests do not excuse a demonstrated structural regression.
 
-Do not be satisfied with "maybe rename this" feedback when the real issue is structural.
-Do not be satisfied with a merely cleaner version of the same messy idea if there is a plausible path to a much simpler idea.
+## Completion
 
-## Review Tone
-
-Be direct, serious, and demanding about quality.
-Do not be rude, but do not soften major maintainability issues into mild suggestions.
-If the code is making the codebase messier, say so clearly.
-If the implementation missed an opportunity for a dramatic simplification, say that clearly too.
-
-Good phrases:
-
-- `this pushes the file past 1k lines. can we decompose this first?`
-- `this adds another special-case branch into an already busy flow. can we move this behind its own abstraction?`
-- `this works, but it makes the surrounding code more spaghetti. let's keep the behavior and restructure the implementation.`
-- `this feels like feature logic leaking into a shared path. can we isolate it?`
-- `this abstraction seems unnecessary. can we just keep the direct flow?`
-- `why does this need a cast / optional here? can we make the boundary more explicit instead?`
-- `this looks like a bespoke helper for something we already have elsewhere. can we reuse the canonical one?`
-- `i think there's a code-judo move here that makes this much simpler. can we reframe this so these branches disappear?`
-- `this refactor moves complexity around, but doesn't really delete it. is there a way to make the model itself simpler?`
-
-## Output Expectations
-
-Prioritize findings in this order:
-
-1. Structural code-quality regressions
-2. Missed opportunities for dramatic simplification / code-judo restructuring
-3. Spaghetti / branching complexity increases
-4. Boundary / abstraction / type-contract problems that make the code harder to reason about
-5. File-size and decomposition concerns
-6. Modularity and abstraction issues
-7. Legibility and maintainability concerns
-
-Do not flood the review with low-value nits if there are larger structural issues.
-Prefer a smaller number of high-conviction comments over a long list of cosmetic notes.
-
-## Approval Bar
-
-Do not approve merely because behavior seems correct.
-The bar for approval is:
-
-- no clear structural regression
-- no obvious missed opportunity to make the implementation dramatically simpler when such a path is visible
-- no unjustified file-size explosion
-- no obvious spaghetti-growth from special-case branching
-- no obviously hacky or magical abstraction that makes the code harder to reason about
-- no unnecessary wrapper/cast/optionality churn obscuring the real design
-- no clear architecture-boundary leak or avoidable canonical-helper duplication
-- no missed opportunity for an obvious decomposition that would materially improve maintainability
-
-Treat these as presumptive blockers unless the author can justify them clearly:
-
-- the PR preserves a lot of incidental complexity when there is a plausible code-judo move that would delete it
-- the PR pushes a file from below 1000 lines to above 1000 lines
-- the PR adds ad-hoc branching that makes an existing flow more tangled
-- the PR solves a local problem by scattering feature checks across shared code
-- the PR adds an unnecessary abstraction, wrapper, or cast-heavy contract that makes the design more indirect
-- the PR duplicates an existing helper or puts logic in the wrong layer when there is a clear canonical home
-
-If those conditions are not met, leave explicit, actionable feedback and push for a cleaner decomposition.
+Account for every meaningful change in scope. Report no findings when no actionable issue meets the evidence bar. State checks run, checks unavailable, and any code not inspected. If fixes were requested, run the affected behavior checks and inspect the final diff before reporting completion.

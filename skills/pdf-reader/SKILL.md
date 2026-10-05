@@ -9,7 +9,8 @@ description: "Use when a task involves reading, creating, or reviewing a PDF whe
 ## Workflow
 1. Prefer visual review: render PDF pages to PNGs and inspect them.
    - Use `pdftoppm` if available.
-   - If unavailable, install Poppler or ask the user to review the output locally.
+   - Discover the repository or bundled document runtime before setting up dependencies. In Codex, use the available workspace-dependency discovery tool.
+   - If no renderer is available, report visual verification as unavailable and preserve the source and output for review.
 2. Use `reportlab` to generate PDFs when creating new documents.
 3. Use `pdfplumber` (or `pypdf`) for text extraction and quick checks; do not rely on it for layout fidelity.
 4. After each meaningful update, re-render pages and verify alignment, spacing, and legibility.
@@ -19,34 +20,15 @@ description: "Use when a task involves reading, creating, or reviewing a PDF whe
 - Write final artifacts under `output/pdf/` when working in this repo.
 - Keep filenames stable and descriptive.
 
-## Dependencies (install if missing)
-Prefer `uv` for dependency management.
+## Dependencies
 
-Python packages:
-```
-uv pip install reportlab pdfplumber pypdf
-```
-If `uv` is unavailable:
-```
-python3 -m pip install reportlab pdfplumber pypdf
-```
-System tools (for rendering):
-```
-# macOS (Homebrew)
-brew install poppler
+Use libraries from the repository or bundled runtime first. Check imports and `pdftoppm -h` in that runtime. If Python packages are missing, use an isolated `uv run --with <required-package>` environment for only the packages this task needs. Leave global Python and system packages unchanged unless the user requests installation.
 
-# Ubuntu/Debian
-sudo apt-get install -y poppler-utils
-```
-
-If installation isn't possible in this environment, tell the user which dependency is missing and how to install it locally.
-
-## Environment
-No required environment variables.
+Report unavailable dependencies and the checks they prevent. A missing renderer does not establish that the PDF layout is correct.
 
 ## Rendering command
 ```
-pdftoppm -png $INPUT_PDF $OUTPUT_PREFIX
+pdftoppm -png "$INPUT_PDF" "$OUTPUT_PREFIX"
 ```
 
 ## Quality expectations
@@ -57,6 +39,6 @@ pdftoppm -png $INPUT_PDF $OUTPUT_PREFIX
 - Citations and references must be human-readable; never leave tool tokens or placeholder strings.
 
 ## Final checks
-- Do not deliver until the latest PNG inspection shows zero visual or formatting defects.
+- When rendering is available, inspect the latest pages and resolve visible defects before delivery. Otherwise, label layout verification as unavailable.
 - Confirm headers/footers, page numbering, and section transitions look polished.
 - Keep intermediate files organized or remove them after final approval.
